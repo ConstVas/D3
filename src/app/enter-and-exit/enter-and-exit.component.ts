@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterContentInit } from '@angular/core';
+import { Component, OnInit, AfterContentInit, ViewChild, ElementRef } from '@angular/core';
 import * as d3 from 'd3';
 
 @Component({
@@ -7,31 +7,34 @@ import * as d3 from 'd3';
   styleUrls: ['./enter-and-exit.component.css']
 })
 export class EnterAndExitComponent implements AfterContentInit {
-
-  public p: any;
+  @ViewChild('enterAndExit') enterAndExit: ElementRef;
+  public h5: any;
 
 
   constructor() {
-    this.p = d3.select('body')
-    .selectAll('p')
-    .data([4, 8, 15, 16, 23, 42])
-      .text(function(d) { return d; });
+
    }
 
   ngAfterContentInit(): void {
-    d3.select('body')
-    .selectAll('p')
+    d3.select(this.enterAndExit.nativeElement)
+    .selectAll('h5')
     .data([4, 8, 15, 16, 23, 42])
-    .enter().append('p')
+    .enter().append('h5')
       .text(function(d) { return 'I’m number ' + d + '!'; });
+
+      this.h5 = d3.select(this.enterAndExit.nativeElement)
+      .selectAll('h5')
+      .data([4, 8, 15, 16, 23, 42])
+        .text(function(d) { return d; });
+        
   }
 
   Enter() {
-    this.p.enter().append('p')
+    this.h5.enter().append('h5')
     .text(function(d) { return d; });
   }
 
   Exit() {
-    this.p.exit().remove();
+    this.h5.exit().remove();
   }
 }
