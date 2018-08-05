@@ -1,6 +1,6 @@
 import { Component, AfterContentInit, ElementRef, ViewChild, HostListener } from '@angular/core';
 import * as d3 from 'd3';
-import { Direction } from '../snake-game.viewmodel';
+import { Direction, Field } from '../snake-game.viewmodel';
 
 @Component({
   selector: 'game-field',
@@ -9,56 +9,71 @@ import { Direction } from '../snake-game.viewmodel';
 export class GameFieldComponent implements AfterContentInit {
   @ViewChild('field') field: ElementRef;
 
+  public gameField: Field;
+
+  width: number = 850;
+
   posX: number = 30;
   posY: number = 30;
   step: number = 10;
   direktion: Direction;
 
+  timerId: any;
+
+  tick = () => {
+    switch (this.direktion) {
+      case Direction.Up:
+      this.posY = this.posY - this.step;
+      this.snake.attr('cy', this.posY);
+        if (this.posY < 10) { 
+          this.posY = 850;
+        }
+        break;
+      case Direction.Down:
+      this.posY = this.posY + this.step;
+        this.snake.attr('cy', this.posY);
+        if (this.posY > 850) { 
+          this.posY = 1;
+        }
+        break;
+      case Direction.Left:
+        this.posX = this.posX - this.step;
+        this.snake.attr('cx', this.posX);
+        if (this.posX < 1) { 
+          this.posX = 1000;
+        }
+        break;
+      case Direction.Right:
+        this.posX = this.posX + this.step;
+        this.snake.attr('cx', this.posX);
+        if (this.posX > 1000) { 
+          this.posX = 1;
+        }
+        break;
+
+      default:
+        break;
+    }
+    this.timerId = setTimeout(this.tick, 100);
+  }
+
   get snake() {
     return d3.select('#snake');
   }
 
-  constructor() { }
+  constructor() {
+    this.gameField = new Field();
+    this.gameField.heigth = 550;
+    this.gameField.width = 1000;
+  }
 
   ngAfterContentInit() {
     this.initObjects();
-    var this__ = this;
-    let timerId = setTimeout(function tick() {
-      switch (this__.direktion) {
-        case Direction.Up:
-          this__.posY = this__.posY - this__.step;
-          this__.snake.attr('cy', this__.posY);
-          if (this__.posY < 10) { 
-            this__.posY = 850;
-          }
-          break;
-        case Direction.Down:
-          this__.posY = this__.posY + this__.step;
-          this__.snake.attr('cy', this__.posY);
-          if (this__.posY > 850) { 
-            this__.posY = 1;
-          }
-          break;
-        case Direction.Left:
-          this__.posX = this__.posX - this__.step;
-          this__.snake.attr('cx', this__.posX);
-          if (this__.posX < 1) { 
-            this__.posX = 1000;
-          }
-          break;
-        case Direction.Right:
-          this__.posX = this__.posX + this__.step;
-          this__.snake.attr('cx', this__.posX);
-          if (this__.posX > 1000) { 
-            this__.posX = 1;
-          }
-          break;
+    this.gameCircle();
+  }
 
-        default:
-          break;
-      }
-      timerId = setTimeout(tick, 100);
-    }, 100);
+  gameCircle() {
+    this.timerId = setTimeout(this.tick, 100);
   }
 
   initObjects() {
