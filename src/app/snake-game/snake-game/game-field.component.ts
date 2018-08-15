@@ -11,11 +11,12 @@ export class GameFieldComponent implements AfterContentInit {
 
   public gameField: Field;
 
-  width: number = 850;
+  public width = 1000;
+  public height = 850;
 
-  posX: number = 30;
-  posY: number = 30;
-  step: number = 10;
+  posX = 30;
+  posY = 30;
+  step = 10;
   direktion: Direction;
 
   timerId: any;
@@ -25,28 +26,28 @@ export class GameFieldComponent implements AfterContentInit {
       case Direction.Up:
       this.posY = this.posY - this.step;
       this.snake.attr('cy', this.posY);
-        if (this.posY < 10) { 
+        if (this.posY < 10) {
           this.posY = 850;
         }
         break;
       case Direction.Down:
       this.posY = this.posY + this.step;
         this.snake.attr('cy', this.posY);
-        if (this.posY > 850) { 
+        if (this.posY > 850) {
           this.posY = 1;
         }
         break;
       case Direction.Left:
         this.posX = this.posX - this.step;
         this.snake.attr('cx', this.posX);
-        if (this.posX < 1) { 
+        if (this.posX < 1) {
           this.posX = 1000;
         }
         break;
       case Direction.Right:
         this.posX = this.posX + this.step;
         this.snake.attr('cx', this.posX);
-        if (this.posX > 1000) { 
+        if (this.posX > 1000) {
           this.posX = 1;
         }
         break;
@@ -63,7 +64,7 @@ export class GameFieldComponent implements AfterContentInit {
 
   constructor() {
     this.gameField = new Field();
-    this.gameField.heigth = 550;
+    this.gameField.heigth = 850;
     this.gameField.width = 1000;
   }
 
