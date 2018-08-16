@@ -1,6 +1,6 @@
 import { Component, AfterContentInit, ElementRef, ViewChild, HostListener } from '@angular/core';
 import * as d3 from 'd3';
-import { Direction, Field, Snake } from '../snake-game.viewmodel';
+import { Direction, Field, Snake, Food, FieldCoordinates } from '../snake-game.viewmodel';
 
 @Component({
   // tslint:disable-next-line:component-selector
@@ -12,6 +12,7 @@ export class GameFieldComponent implements AfterContentInit {
 
   public gameField: Field;
   public snake: Snake;
+  public food: Food;
 
   public width = 1000;
   public height = 850;
@@ -22,36 +23,46 @@ export class GameFieldComponent implements AfterContentInit {
   posX = 30;
   posY = 30;
   step = 10;
-  direktion: Direction;
+  direction: Direction;
+  tickspeed = 100;
+  score = 0;
 
   timerId: any;
 
+  constructor() {
+    this.gameField = new Field();
+    this.gameField.heigth = 850;
+    this.gameField.width = 1000;
+  }
+
   tick = () => {
-    switch (this.direktion) {
+    switch (this.direction) {
       case Direction.Up:
+      this.snake.rotate(Direction.Up);
       this.posY = this.posY - this.step;
-      this.snake.position.y = this.posY; // attr('cy', this.posY);
+      this.snake.move(new FieldCoordinates(this.posX, this.posY), this.direction);
+      this.snake.head.direction = Direction.Up;
         if (this.posY < 10) {
           this.posY = 850;
         }
         break;
       case Direction.Down:
       this.posY = this.posY + this.step;
-      this.snake.position.y = this.posY;
+      this.snake.move(new FieldCoordinates(this.posX, this.posY), this.direction);
         if (this.posY > 850) {
           this.posY = 1;
         }
         break;
       case Direction.Left:
         this.posX = this.posX - this.step;
-        this.snake.position.x = this.posX;
+        this.snake.move(new FieldCoordinates(this.posX, this.posY), this.direction);
         if (this.posX < 1) {
           this.posX = 1000;
         }
         break;
       case Direction.Right:
         this.posX = this.posX + this.step;
-        this.snake.position.x = this.posX;
+        this.snake.move(new FieldCoordinates(this.posX, this.posY), this.direction);
         if (this.posX > 1000) {
           this.posX = 1;
         }
@@ -61,47 +72,42 @@ export class GameFieldComponent implements AfterContentInit {
         break;
     }
     if (this.isSnakeEatFood()) {
-      this.food.remove();
-      this.foodExist = false;
+      this.food.destroy();
       this.addFood();
       this.growSnake();
     }
-    this.timerId = setTimeout(this.tick, 100);
+    if (this.isSnakeEatSelf()) {
+      this.snake.destroy();
+      this.initSnake();
+      this.score = 0;
+    }
+    this.timerId = setTimeout(this.tick, this.tickspeed - this.snake.speed);
   }
 
   growSnake() {
-    d3.select(this.field.nativeElement)
-      .append('circle')
-      .attr('cx', this.snake.position.x)
-      .attr('id', 'snakeBody' + this.snakeLength)
-      .attr('cy', this.snake.position.y)
-      .attr('r', 10)
-      .attr('fill', 'red');
-    this.snakeLength++;
+    this.snake.addBody(this.field.nativeElement);
   }
 
   isSnakeEatFood() {
-    if (!this.food) {
+    if (!this.food.isExist) {
       return false;
     }
-    if (Math.abs(this.snake.position.x - this.food.attr('cx')) < 10 && Math.abs(this.snake.position.y - this.food.attr('cy')) < 10) {
+    if (Math.abs(this.snake.head.position.x - this.food.position.x) < 10
+    && Math.abs(this.snake.head.position.y - this.food.position.y) < 10) {
+      console.log('score = ' + this.score++);
+      console.log('speed = ' + this.snake.speed);
       return true;
     }
     return false;
   }
 
-  // get snake() {
-  //   return d3.select('#snake');
-  // }
-
-  get food() {
-    return d3.select('#food');
-  }
-
-  constructor() {
-    this.gameField = new Field();
-    this.gameField.heigth = 850;
-    this.gameField.width = 1000;
+  isSnakeEatSelf() {
+    for (const part of this.snake.body) {
+      if (Math.abs(this.snake.head.position.x - part.position.x) < 10
+      && Math.abs(this.snake.head.position.y - part.position.y) < 10) {
+        return true;
+      }
+    }
   }
 
   ngAfterContentInit() {
@@ -110,21 +116,14 @@ export class GameFieldComponent implements AfterContentInit {
   }
 
   gameCircle() {
-    this.timerId = setTimeout(this.tick, 100);
-    this.addFood();
+    this.timerId = setTimeout(this.tick, this.tickspeed - this.snake.speed);
+    if (!this.foodExist) {
+      this.addFood();
+    }
   }
 
   addFood() {
-    if (!this.foodExist) {
-       d3.select(this.field.nativeElement)
-         .append('circle')
-         .attr('id', 'food')
-         .attr('fill', 'green')
-         .attr('cx', Math.random() * 1000)
-         .attr('cy', Math.random() * 850)
-         .attr('r', 10);
-         this.foodExist = true;
-    }
+    this.food = new Food(this.field.nativeElement);
   }
 
   initObjects() {
@@ -145,28 +144,24 @@ export class GameFieldComponent implements AfterContentInit {
   moveSnake(event) {
     switch (event.key) {
       case 'w':
-        console.log('UP');
-        this.direktion = Direction.Up;
+        this.direction = Direction.Up;
         this.posY = this.posY - this.step;
-        this.snake.position.y = this.posY;
+        this.snake.move(new FieldCoordinates(this.posX, this.posY), this.direction);
         break;
       case 'a':
-        console.log('LEFT');
-        this.direktion = Direction.Left;
+        this.direction = Direction.Left;
         this.posX = this.posX - this.step;
-        this.snake.position.x = this.posX;
+        this.snake.move(new FieldCoordinates(this.posX, this.posY), this.direction);
         break;
       case 'd':
-        console.log('RIGHT');
-        this.direktion = Direction.Right;
+        this.direction = Direction.Right;
         this.posX = this.posX + this.step;
-        this.snake.position.x = this.posX;
+        this.snake.move(new FieldCoordinates(this.posX, this.posY), this.direction);
         break;
       case 's':
-        console.log('DOWN');
-        this.direktion = Direction.Down;
+        this.direction = Direction.Down;
         this.posY = this.posY + this.step;
-        this.snake.position.y = this.posY;
+        this.snake.move(new FieldCoordinates(this.posX, this.posY), this.direction);
         break;
 
       default:
